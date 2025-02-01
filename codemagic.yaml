@@ -2,16 +2,14 @@ workflows:
   xamarin-android:
     name: Xamarin Android Build
     instance_type: mac_mini_m1
-    max_build_duration: 120
     environment:
       vars:
-        PROJECT_PATH: "YourSolutionName.sln" # Αντικατάστησε με το δικό σου .sln αρχείο
         CONFIGURATION: "Release"
-        ANDROID_PROJECT_PATH: "YourAndroidProject.csproj"
+        ANDROID_PROJECT_PATH: "MyProject.csproj"
       node: latest
       xcode: latest
     scripts:
-      - name: Εγκατάσταση του .NET SDK και NuGet
+      - name: Εγκατάσταση του .NET SDK και Xamarin
         script: |
           wget https://dot.net/v1/dotnet-install.sh
           chmod +x dotnet-install.sh
@@ -19,20 +17,14 @@ workflows:
           export PATH="$HOME/.dotnet:$PATH"
           dotnet --version
           dotnet nuget locals all --clear
-      
-      - name: Αναβάθμιση NuGet και επαναφορά των πακέτων
+      - name: Restore NuGet packages
         script: |
-          mono /Library/Frameworks/Mono.framework/Versions/Current/bin/nuget update -self
-          mono /Library/Frameworks/Mono.framework/Versions/Current/bin/nuget restore $PROJECT_PATH
-          dotnet restore $PROJECT_PATH --force
-
-      - name: Build του Xamarin Android project
+          dotnet restore $ANDROID_PROJECT_PATH
+      - name: Build Xamarin Android project
         script: |
-          msbuild $ANDROID_PROJECT_PATH /t:Rebuild /p:Configuration=$CONFIGURATION /p:Platform="Any CPU"
-
-      - name: Εύρεση και αποθήκευση του APK
+          dotnet build $ANDROID_PROJECT_PATH --configuration $CONFIGURATION
+      - name: Find and save the APK
         script: |
           find . -name "*.apk" -exec mv {} $CM_BUILD_DIR/output.apk \;
-    
     artifacts:
       - output.apk
