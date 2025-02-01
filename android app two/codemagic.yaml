@@ -5,26 +5,34 @@ workflows:
     environment:
       vars:
         CONFIGURATION: "Release"
-        ANDROID_PROJECT_PATH: "MyProject.csproj"
+        ANDROID_PROJECT_PATH: "Myproject.csproj"
       node: latest
       xcode: latest
     scripts:
       - name: Εγκατάσταση του .NET SDK και Xamarin
         script: |
+          export DOTNET_ROOT=$HOME/.dotnet
+          export PATH=$HOME/.dotnet:$PATH
           wget https://dot.net/v1/dotnet-install.sh
           chmod +x dotnet-install.sh
           ./dotnet-install.sh --version latest
-          export PATH="$HOME/.dotnet:$PATH"
+          echo 'export PATH=$HOME/.dotnet:$PATH' >> $CM_ENV
           dotnet --version
           dotnet nuget locals all --clear
+      
       - name: Restore NuGet packages
         script: |
+          export PATH=$HOME/.dotnet:$PATH
           dotnet restore $ANDROID_PROJECT_PATH
+
       - name: Build Xamarin Android project
         script: |
+          export PATH=$HOME/.dotnet:$PATH
           dotnet build $ANDROID_PROJECT_PATH --configuration $CONFIGURATION
+
       - name: Find and save the APK
         script: |
           find . -name "*.apk" -exec mv {} $CM_BUILD_DIR/output.apk \;
+
     artifacts:
       - output.apk
