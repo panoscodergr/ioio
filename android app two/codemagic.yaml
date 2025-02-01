@@ -1,28 +1,30 @@
 workflows:
   xamarin-android:
     name: Xamarin Android Build
-    instance_type: mac_mini_m1 # Χρησιμοποιούμε macOS για καλύτερη υποστήριξη Xamarin
-    max_build_duration: 120 # Διάρκεια build σε λεπτά
+    instance_type: mac_mini_m1
+    max_build_duration: 120
     environment:
       vars:
-        PROJECT_PATH: "YourSolutionName.sln" # Αντικατάστησε το με το όνομα του .sln αρχείου σου
-        CONFIGURATION: "Release" # Μπορεί να είναι Debug ή Release
-        ANDROID_PROJECT_PATH: "YourAndroidProject.csproj" # Το μονοπάτι του Android project
-      node: latest # Για διαχείριση npm αν χρειάζεται
-      xcode: latest # Εγκατάσταση Xcode για Mac builds αν χρειάζεται
+        PROJECT_PATH: "YourSolutionName.sln" # Αντικατάστησε με το δικό σου .sln αρχείο
+        CONFIGURATION: "Release"
+        ANDROID_PROJECT_PATH: "YourAndroidProject.csproj"
+      node: latest
+      xcode: latest
     scripts:
-      - name: Εγκατάσταση του .NET SDK
+      - name: Εγκατάσταση του .NET SDK και NuGet
         script: |
           wget https://dot.net/v1/dotnet-install.sh
           chmod +x dotnet-install.sh
           ./dotnet-install.sh --version latest
           export PATH="$HOME/.dotnet:$PATH"
           dotnet --version
+          dotnet nuget locals all --clear
       
-      - name: Επαναφορά των NuGet packages
+      - name: Αναβάθμιση NuGet και επαναφορά των πακέτων
         script: |
-          nuget restore $PROJECT_PATH
-          dotnet restore $PROJECT_PATH
+          mono /Library/Frameworks/Mono.framework/Versions/Current/bin/nuget update -self
+          mono /Library/Frameworks/Mono.framework/Versions/Current/bin/nuget restore $PROJECT_PATH
+          dotnet restore $PROJECT_PATH --force
 
       - name: Build του Xamarin Android project
         script: |
