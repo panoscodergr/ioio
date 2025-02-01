@@ -1,50 +1,36 @@
 workflows:
   xamarin-android:
-    name: Build Xamarin Android App
-    max_build_duration: 120
+    name: Xamarin Android Build
+    instance_type: mac_mini_m1 # Χρησιμοποιούμε macOS για καλύτερη υποστήριξη Xamarin
+    max_build_duration: 120 # Διάρκεια build σε λεπτά
     environment:
       vars:
-        ANDROID_BUILD_TOOLS_VERSION: "30.0.3"
-        ANDROID_COMPILE_SDK: "31"
-        ANDROID_TARGET_SDK: "31"
-    triggering:
-      events:
-        - push
-        - pull_request
-      branch_patterns:
-        - pattern: "main"
-          include: true
-          source: true
+        PROJECT_PATH: "YourSolutionName.sln" # Αντικατάστησε το με το όνομα του .sln αρχείου σου
+        CONFIGURATION: "Release" # Μπορεί να είναι Debug ή Release
+        ANDROID_PROJECT_PATH: "YourAndroidProject.csproj" # Το μονοπάτι του Android project
+      node: latest # Για διαχείριση npm αν χρειάζεται
+      xcode: latest # Εγκατάσταση Xcode για Mac builds αν χρειάζεται
     scripts:
-      # Εγκατάσταση .NET SDK (για Xamarin)
-      - name: Install .NET SDK
+      - name: Εγκατάσταση του .NET SDK
         script: |
-          curl -sSL https://aka.ms/getdotnet | bash /dev/stdin --version 6.0
-
-      # Επαναφορά NuGet Packages
-      - name: Restore NuGet Packages
+          wget https://dot.net/v1/dotnet-install.sh
+          chmod +x dotnet-install.sh
+          ./dotnet-install.sh --version latest
+          export PATH="$HOME/.dotnet:$PATH"
+          dotnet --version
+      
+      - name: Επαναφορά των NuGet packages
         script: |
-          dotnet restore YourSolution.sln
+          nuget restore $PROJECT_PATH
+          dotnet restore $PROJECT_PATH
 
-      # Build Xamarin Android App
-      - name: Build Xamarin Android App
+      - name: Build του Xamarin Android project
         script: |
-          msbuild /t:Build /p:Configuration=Release /p:Platform="Any CPU" YourSolution.sln
+          msbuild $ANDROID_PROJECT_PATH /t:Rebuild /p:Configuration=$CONFIGURATION /p:Platform="Any CPU"
 
-      # Υπογραφή APK (προαιρετικό)
-      - name: Sign APK
+      - name: Εύρεση και αποθήκευση του APK
         script: |
-          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
-            -keystore $CM_KEYSTORE_PATH \
-            -storepass $CM_KEYSTORE_PASSWORD \
-            YourProject/bin/Release/*.apk $CM_KEYSTORE_ALIAS
-
-      # Δημιουργία φακέλου και αντιγραφή του APK
-      - name: Archive APK
-        script: |
-          mkdir -p build
-          cp YourProject/bin/Release/*.apk build/
-
+          find . -name "*.apk" -exec mv {} $CM_BUILD_DIR/output.apk \;
+    
     artifacts:
-      # Δημιουργία αρχείου APK
-      - build/*.apk
+      - output.apk
