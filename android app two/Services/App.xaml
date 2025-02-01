@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Application xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="JobApp.App">
+    <Application.Resources>
+        <!-- Εδώ μπορούν να προστεθούν κοινά στυλ και πόροι -->
+    </Application.Resources>
+</Application>
