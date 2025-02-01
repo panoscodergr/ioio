@@ -1,0 +1,50 @@
+workflows:
+  xamarin-android:
+    name: Build Xamarin Android App
+    max_build_duration: 120
+    environment:
+      vars:
+        ANDROID_BUILD_TOOLS_VERSION: "30.0.3"
+        ANDROID_COMPILE_SDK: "31"
+        ANDROID_TARGET_SDK: "31"
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: "main"
+          include: true
+          source: true
+    scripts:
+      # Εγκατάσταση .NET SDK (για Xamarin)
+      - name: Install .NET SDK
+        script: |
+          curl -sSL https://aka.ms/getdotnet | bash /dev/stdin --version 6.0
+
+      # Επαναφορά NuGet Packages
+      - name: Restore NuGet Packages
+        script: |
+          dotnet restore YourSolution.sln
+
+      # Build Xamarin Android App
+      - name: Build Xamarin Android App
+        script: |
+          msbuild /t:Build /p:Configuration=Release /p:Platform="Any CPU" YourSolution.sln
+
+      # Υπογραφή APK (προαιρετικό)
+      - name: Sign APK
+        script: |
+          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 \
+            -keystore $CM_KEYSTORE_PATH \
+            -storepass $CM_KEYSTORE_PASSWORD \
+            YourProject/bin/Release/*.apk $CM_KEYSTORE_ALIAS
+
+      # Δημιουργία φακέλου και αντιγραφή του APK
+      - name: Archive APK
+        script: |
+          mkdir -p build
+          cp YourProject/bin/Release/*.apk build/
+
+    artifacts:
+      # Δημιουργία αρχείου APK
+      - build/*.apk
